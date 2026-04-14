@@ -36,3 +36,16 @@ export interface DashboardSummary {
   totalExpense: number
   balance: number
 }
+
+export type UserRole = 'admin' | 'user'
+export type UserStatus = 'pending' | 'approved' | 'rejected'
+
+export interface Profile {
+  id: string
+  email: string
+  role: UserRole
+  status: UserStatus
+  created_at: string
+  approved_at: string | null
+  approved_by: string | null
+}

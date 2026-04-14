@@ -8,16 +8,18 @@ import { ThemeToggle } from './theme-toggle'
 
 interface HeaderProps {
   userEmail: string
+  isAdmin?: boolean
 }
 
-const navLinks = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/dashboard/transactions', label: 'Transações' },
-]
-
-export function Header({ userEmail }: HeaderProps) {
+export function Header({ userEmail, isAdmin }: HeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
+
+  const navLinks = [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/dashboard/transactions', label: 'Transações' },
+    ...(isAdmin ? [{ href: '/admin', label: 'Usuários' }] : []),
+  ]
 
   async function handleLogout() {
     const supabase = createClient()
@@ -52,6 +54,11 @@ export function Header({ userEmail }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <span className="text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full hidden sm:block">
+              Admin
+            </span>
+          )}
           <span className="text-sm text-muted-foreground hidden sm:block">{userEmail}</span>
           <ThemeToggle />
           <Button variant="outline" size="sm" onClick={handleLogout}>
