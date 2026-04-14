@@ -95,7 +95,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
 
       {/* Lista */}
       {filtered.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
+        <div className="text-center py-12 text-muted-foreground">
           Nenhuma transação encontrada.
         </div>
       ) : (
@@ -103,19 +103,19 @@ export function TransactionList({ transactions }: TransactionListProps) {
           {filtered.map((t) => (
             <div
               key={t.id}
-              className="flex items-center justify-between bg-white rounded-lg border px-4 py-3 gap-4"
+              className="flex items-center justify-between bg-card text-card-foreground rounded-lg border px-4 py-3 gap-4"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-xl shrink-0">
                   {t.type === 'income' ? '↑' : '↓'}
                 </span>
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-900 truncate">{t.description}</p>
+                  <p className="font-medium truncate">{t.description}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <Badge variant="secondary" className="text-xs">
                       {CATEGORY_LABELS[t.category] ?? t.category}
                     </Badge>
-                    <span className="text-xs text-gray-400">{formatDate(t.date)}</span>
+                    <span className="text-xs text-muted-foreground">{formatDate(t.date)}</span>
                   </div>
                 </div>
               </div>

@@ -60,7 +60,7 @@ export function TransactionForm({ transaction, onSubmit, onCancel }: Transaction
             className={`py-2 px-4 rounded-md text-sm font-medium border transition-colors ${
               type === 'expense'
                 ? 'bg-red-500 text-white border-red-500'
-                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                : 'bg-background text-muted-foreground border-border hover:bg-muted'
             }`}
           >
             Despesa
@@ -71,7 +71,7 @@ export function TransactionForm({ transaction, onSubmit, onCancel }: Transaction
             className={`py-2 px-4 rounded-md text-sm font-medium border transition-colors ${
               type === 'income'
                 ? 'bg-green-500 text-white border-green-500'
-                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                : 'bg-background text-muted-foreground border-border hover:bg-muted'
             }`}
           >
             Receita

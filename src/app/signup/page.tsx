@@ -47,7 +47,7 @@ export default function SignupPage() {
   // Tela de confirmação após cadastro
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <div className="flex justify-center mb-4">
@@ -97,7 +97,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
