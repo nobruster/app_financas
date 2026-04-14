@@ -54,20 +54,21 @@ export async function updateSession(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profile?.status === 'pending') {
+    // Sem perfil ou pendente → bloqueado
+    if (!profile || profile.status === 'pending') {
       const url = request.nextUrl.clone()
       url.pathname = '/pending'
       return NextResponse.redirect(url)
     }
 
-    if (profile?.status === 'rejected') {
+    if (profile.status === 'rejected') {
       const url = request.nextUrl.clone()
       url.pathname = '/rejected'
       return NextResponse.redirect(url)
     }
 
     // Rota admin → somente admin
-    if (isAdminRoute && profile?.role !== 'admin') {
+    if (isAdminRoute && profile.role !== 'admin') {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
