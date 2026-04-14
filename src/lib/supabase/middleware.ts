@@ -25,25 +25,53 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
+  const publicRoutes = ['/login', '/signup', '/pending', '/rejected']
+  const isPublicRoute = publicRoutes.some((r) => pathname.startsWith(r))
+  const isAdminRoute = pathname.startsWith('/admin')
 
-  const publicRoutes = ['/login', '/signup']
-  const isPublicRoute = publicRoutes.includes(pathname)
-
+  // Não autenticado → login
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user && isPublicRoute) {
+  // Autenticado em rota pública → checar perfil e redirecionar
+  if (user && isPublicRoute && pathname !== '/pending' && pathname !== '/rejected') {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
+  }
+
+  // Autenticado → checar status do perfil
+  if (user && !isPublicRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('status, role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.status === 'pending') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/pending'
+      return NextResponse.redirect(url)
+    }
+
+    if (profile?.status === 'rejected') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/rejected'
+      return NextResponse.redirect(url)
+    }
+
+    // Rota admin → somente admin
+    if (isAdminRoute && profile?.role !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
