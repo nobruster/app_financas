@@ -9,13 +9,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, status')
     .eq('id', user.id)
     .single()
 
+  // Bloqueia usuários não aprovados
+  if (!profile || profile.status === 'pending') redirect('/pending')
+  if (profile.status === 'rejected') redirect('/rejected')
+
   return (
     <div className="min-h-screen bg-background">
-      <Header userEmail={user.email ?? ''} isAdmin={profile?.role === 'admin'} />
+      <Header userEmail={user.email ?? ''} isAdmin={profile.role === 'admin'} />
       <main className="max-w-6xl mx-auto px-4 py-8">
         {children}
       </main>
