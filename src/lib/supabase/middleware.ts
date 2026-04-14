@@ -47,11 +47,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Autenticado → checar status via service role (bypassa RLS)
+  // Autenticado → checar status do perfil
   if (user && !isPublicRoute) {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    // Se service role key não está configurada, delega checagem ao layout
+    if (!serviceKey || serviceKey === 'your-service-role-key') {
+      return supabaseResponse
+    }
+
     const adminClient = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      serviceKey,
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
@@ -61,7 +68,6 @@ export async function updateSession(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    // Sem perfil ou pendente → bloqueado
     if (!profile || profile.status === 'pending') {
       const url = request.nextUrl.clone()
       url.pathname = '/pending'
@@ -74,7 +80,6 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Rota admin → somente admin
     if (isAdminRoute && profile.role !== 'admin') {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
