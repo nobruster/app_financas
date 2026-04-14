@@ -53,7 +53,7 @@ export function ExpenseChart({ transactions }: ExpenseChartProps) {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={280}>
-          <PieChart>
+          <PieChart style={{ background: 'transparent' }}>
             <Pie
               data={data}
               cx="50%"

@@ -22,8 +22,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {MONTHS[month - 1]} de {year}
           </p>
         </div>
@@ -41,13 +41,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       {/* Últimas transações */}
       {transactions.length > 0 && (
         <div>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">Últimas transações</h2>
+          <h2 className="text-base font-semibold mb-3">Últimas transações</h2>
           <div className="space-y-2">
             {transactions.slice(0, 5).map((t) => (
-              <div key={t.id} className="flex items-center justify-between bg-white rounded-lg border px-4 py-3">
+              <div key={t.id} className="flex items-center justify-between bg-card text-card-foreground rounded-lg border px-4 py-3">
                 <div>
-                  <p className="font-medium text-gray-900 text-sm">{t.description}</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="font-medium text-sm">{t.description}</p>
+                  <p className="text-xs text-muted-foreground">
                     {new Date(t.date + 'T00:00:00').toLocaleDateString('pt-BR')}
                   </p>
                 </div>
