@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
@@ -39,16 +40,22 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Autenticado em rota pública → checar perfil e redirecionar
-  if (user && isPublicRoute && pathname !== '/pending' && pathname !== '/rejected') {
+  // Autenticado em rota pública → dashboard
+  if (user && isPublicRoute && !pathname.startsWith('/pending') && !pathname.startsWith('/rejected')) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 
-  // Autenticado → checar status do perfil
+  // Autenticado → checar status via service role (bypassa RLS)
   if (user && !isPublicRoute) {
-    const { data: profile } = await supabase
+    const adminClient = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('status, role')
       .eq('id', user.id)
