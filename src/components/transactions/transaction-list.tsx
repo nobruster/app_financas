@@ -7,11 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TransactionForm } from './transaction-form'
 import { deleteTransaction, updateTransaction } from '@/actions/transactions'
-import { Transaction } from '@/types'
-import { CATEGORY_LABELS, CATEGORIES, MONTHS } from '@/lib/constants'
+import { Transaction, Category } from '@/types'
+import { MONTHS } from '@/lib/constants'
 
 interface TransactionListProps {
   transactions: Transaction[]
+  categories: Category[]
 }
 
 function formatCurrency(value: number) {
@@ -23,12 +24,14 @@ function formatDate(dateStr: string) {
   return `${day}/${month}/${year}`
 }
 
-export function TransactionList({ transactions }: TransactionListProps) {
+export function TransactionList({ transactions, categories }: TransactionListProps) {
   const [editing, setEditing] = useState<Transaction | null>(null)
   const [deleting, setDeleting] = useState<Transaction | null>(null)
   const [filterType, setFilterType] = useState('all')
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterMonth, setFilterMonth] = useState('all')
+
+  const categoryLabel = (slug: string) => categories.find((c) => c.slug === slug)?.name ?? slug
 
   const filtered = transactions.filter((t) => {
     if (filterType !== 'all' && t.type !== filterType) return false
@@ -57,7 +60,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
     <div className="space-y-4">
       {/* Filtros */}
       <div className="flex flex-wrap gap-2">
-        <Select value={filterMonth} onValueChange={setFilterMonth}>
+        <Select value={filterMonth} onValueChange={(v) => v && setFilterMonth(v)}>
           <SelectTrigger className="w-36">
             <SelectValue placeholder="Mês" />
           </SelectTrigger>
@@ -69,7 +72,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
           </SelectContent>
         </Select>
 
-        <Select value={filterType} onValueChange={setFilterType}>
+        <Select value={filterType} onValueChange={(v) => v && setFilterType(v)}>
           <SelectTrigger className="w-36">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
@@ -80,14 +83,14 @@ export function TransactionList({ transactions }: TransactionListProps) {
           </SelectContent>
         </Select>
 
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
+        <Select value={filterCategory} onValueChange={(v) => v && setFilterCategory(v)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas categorias</SelectItem>
-            {CATEGORIES.map((c) => (
-              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -113,7 +116,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
                   <p className="font-medium truncate">{t.description}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <Badge variant="secondary" className="text-xs">
-                      {CATEGORY_LABELS[t.category] ?? t.category}
+                      {categoryLabel(t.category)}
                     </Badge>
                     <span className="text-xs text-muted-foreground">{formatDate(t.date)}</span>
                   </div>
@@ -147,6 +150,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
           {editing && (
             <TransactionForm
               transaction={editing}
+              categories={categories}
               onSubmit={handleUpdate}
               onCancel={() => setEditing(null)}
             />
@@ -160,7 +164,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
           <DialogHeader>
             <DialogTitle>Excluir transação</DialogTitle>
           </DialogHeader>
-          <p className="text-gray-600 text-sm">
+          <p className="text-muted-foreground text-sm">
             Tem certeza que deseja excluir <strong>{deleting?.description}</strong>? Esta ação não pode ser desfeita.
           </p>
           <div className="flex gap-2 mt-4">

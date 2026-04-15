@@ -2,11 +2,11 @@
 
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Transaction } from '@/types'
-import { CATEGORY_LABELS } from '@/lib/constants'
+import { Transaction, Category } from '@/types'
 
 interface ExpenseChartProps {
   transactions: Transaction[]
+  categories: Category[]
 }
 
 const COLORS = [
@@ -18,7 +18,9 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 }
 
-export function ExpenseChart({ transactions }: ExpenseChartProps) {
+export function ExpenseChart({ transactions, categories }: ExpenseChartProps) {
+  const categoryLabel = (slug: string) => categories.find((c) => c.slug === slug)?.name ?? slug
+
   const expenses = transactions.filter((t) => t.type === 'expense')
 
   const dataMap: Record<string, number> = {}
@@ -28,7 +30,7 @@ export function ExpenseChart({ transactions }: ExpenseChartProps) {
 
   const data = Object.entries(dataMap)
     .map(([category, value]) => ({
-      name: CATEGORY_LABELS[category] ?? category,
+      name: categoryLabel(category),
       value,
     }))
     .sort((a, b) => b.value - a.value)
@@ -37,10 +39,10 @@ export function ExpenseChart({ transactions }: ExpenseChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-gray-700">Despesas por categoria</CardTitle>
+          <CardTitle className="text-base font-semibold">Despesas por categoria</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-gray-400 py-8">Nenhuma despesa no período.</p>
+          <p className="text-center text-muted-foreground py-8">Nenhuma despesa no período.</p>
         </CardContent>
       </Card>
     )
@@ -49,7 +51,7 @@ export function ExpenseChart({ transactions }: ExpenseChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold text-gray-700">Despesas por categoria</CardTitle>
+        <CardTitle className="text-base font-semibold">Despesas por categoria</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={280}>
@@ -67,7 +69,7 @@ export function ExpenseChart({ transactions }: ExpenseChartProps) {
                 <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number) => formatCurrency(value)} />
+            <Tooltip formatter={(value) => typeof value === 'number' ? formatCurrency(value) : value} />
             <Legend />
           </PieChart>
         </ResponsiveContainer>

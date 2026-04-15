@@ -1,17 +1,16 @@
 export type TransactionType = 'income' | 'expense'
 
-export type Category =
-  | 'alimentacao'
-  | 'transporte'
-  | 'moradia'
-  | 'saude'
-  | 'educacao'
-  | 'lazer'
-  | 'vestuario'
-  | 'salario'
-  | 'freelance'
-  | 'investimentos'
-  | 'outros'
+export type CategoryType = 'income' | 'expense' | 'both'
+
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  type: CategoryType
+  active: boolean
+  sort_order: number
+  created_at: string
+}
 
 export interface Transaction {
   id: string
@@ -19,7 +18,7 @@ export interface Transaction {
   type: TransactionType
   amount: number
   description: string
-  category: Category
+  category: string
   date: string
   created_at: string
 }
@@ -27,7 +26,7 @@ export interface Transaction {
 export interface TransactionFilters {
   month?: number
   year?: number
-  category?: Category
+  category?: string
   type?: TransactionType
 }
 

@@ -5,22 +5,22 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CATEGORIES } from '@/lib/constants'
-import { Transaction } from '@/types'
+import { Category, Transaction } from '@/types'
 
 interface TransactionFormProps {
   transaction?: Transaction
+  categories: Category[]
   onSubmit: (formData: FormData) => Promise<{ error?: string; success?: boolean } | void>
   onCancel?: () => void
 }
 
-export function TransactionForm({ transaction, onSubmit, onCancel }: TransactionFormProps) {
+export function TransactionForm({ transaction, categories, onSubmit, onCancel }: TransactionFormProps) {
   const [type, setType] = useState<'income' | 'expense'>(transaction?.type ?? 'expense')
   const [category, setCategory] = useState(transaction?.category ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const filteredCategories = CATEGORIES.filter(
+  const filteredCategories = categories.filter(
     (c) => c.type === type || c.type === 'both'
   )
 
@@ -45,7 +45,7 @@ export function TransactionForm({ transaction, onSubmit, onCancel }: Transaction
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-4 py-3">
+        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 text-sm rounded-md px-4 py-3">
           {error}
         </div>
       )}
@@ -109,14 +109,14 @@ export function TransactionForm({ transaction, onSubmit, onCancel }: Transaction
       {/* Categoria */}
       <div className="space-y-2">
         <Label>Categoria</Label>
-        <Select value={category} onValueChange={setCategory} required>
+        <Select value={category} onValueChange={(v) => v && setCategory(v)} required>
           <SelectTrigger>
             <SelectValue placeholder="Selecione uma categoria" />
           </SelectTrigger>
           <SelectContent>
             {filteredCategories.map((cat) => (
-              <SelectItem key={cat.value} value={cat.value}>
-                {cat.label}
+              <SelectItem key={cat.id} value={cat.slug}>
+                {cat.name}
               </SelectItem>
             ))}
           </SelectContent>

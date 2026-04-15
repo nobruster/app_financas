@@ -1,11 +1,13 @@
 import { redirect } from 'next/navigation'
 import { getAllProfiles, approveUser, rejectUser } from '@/actions/profiles'
+import { getAllCategories } from '@/actions/categories'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Profile } from '@/types'
 import { ChangePasswordButton } from '@/components/admin/change-password-button'
 import { ToggleStatusButton } from '@/components/admin/toggle-status-button'
 import { CreateUserButton } from '@/components/admin/create-user-button'
+import { CategoryManager } from '@/components/admin/category-manager'
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Pendente',
@@ -30,7 +32,10 @@ export default async function AdminPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const profiles = await getAllProfiles()
+  const [profiles, categories] = await Promise.all([
+    getAllProfiles(),
+    getAllCategories(),
+  ])
   const pending = profiles.filter((p: Profile) => p.status === 'pending')
   const others = profiles.filter((p: Profile) => p.status !== 'pending')
 
@@ -103,6 +108,15 @@ export default async function AdminPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Categorias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold">Categorias</h2>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie as categorias disponíveis para transações</p>
+        </div>
+        <CategoryManager categories={categories} />
       </div>
 
       {/* Todos os usuários */}

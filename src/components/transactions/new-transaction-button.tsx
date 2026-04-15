@@ -5,8 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { TransactionForm } from './transaction-form'
 import { createTransaction } from '@/actions/transactions'
+import { Category } from '@/types'
 
-export function NewTransactionButton() {
+interface NewTransactionButtonProps {
+  categories: Category[]
+}
+
+export function NewTransactionButton({ categories }: NewTransactionButtonProps) {
   const [open, setOpen] = useState(false)
 
   async function handleSubmit(formData: FormData) {
@@ -24,7 +29,7 @@ export function NewTransactionButton() {
           <DialogHeader>
             <DialogTitle>Nova transação</DialogTitle>
           </DialogHeader>
-          <TransactionForm onSubmit={handleSubmit} onCancel={() => setOpen(false)} />
+          <TransactionForm categories={categories} onSubmit={handleSubmit} onCancel={() => setOpen(false)} />
         </DialogContent>
       </Dialog>
     </>
