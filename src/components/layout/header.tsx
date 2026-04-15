@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from './theme-toggle'
+import { ChangeOwnPassword } from './change-own-password'
 
 interface HeaderProps {
   userEmail: string
@@ -60,6 +61,7 @@ export function Header({ userEmail, isAdmin }: HeaderProps) {
             </span>
           )}
           <span className="text-sm text-muted-foreground hidden sm:block">{userEmail}</span>
+          <ChangeOwnPassword />
           <ThemeToggle />
           <Button variant="outline" size="sm" onClick={handleLogout}>
             Sair
