@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Profile } from '@/types'
 import { ChangePasswordButton } from '@/components/admin/change-password-button'
 import { ToggleStatusButton } from '@/components/admin/toggle-status-button'
+import { CreateUserButton } from '@/components/admin/create-user-button'
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Pendente',
@@ -47,9 +48,12 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Painel Administrativo</h1>
-        <p className="text-muted-foreground mt-1">Gerencie os cadastros de usuários</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Painel Administrativo</h1>
+          <p className="text-muted-foreground mt-1">Gerencie os usuários do sistema</p>
+        </div>
+        <CreateUserButton />
       </div>
 
       {/* Pendentes */}

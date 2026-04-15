@@ -5,6 +5,47 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Profile } from '@/types'
 
+export async function createUserByAdmin(email: string, password: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { data: myProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (myProfile?.role !== 'admin') return { error: 'Sem permissão' }
+  if (password.length < 6) return { error: 'A senha deve ter pelo menos 6 caracteres.' }
+
+  const adminClient = createAdminClient()
+
+  // Cria o usuário via auth admin (sem precisar de confirmação de email)
+  const { data, error } = await adminClient.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true, // já confirma o email automaticamente
+  })
+
+  if (error) {
+    if (error.message.includes('already registered')) return { error: 'Este email já está cadastrado.' }
+    return { error: error.message }
+  }
+
+  // O trigger handle_new_user cria o perfil automaticamente,
+  // mas como é criado pelo admin, já aprovamos direto
+  if (data.user) {
+    await adminClient
+      .from('profiles')
+      .update({ status: 'approved', approved_by: user.id, approved_at: new Date().toISOString() })
+      .eq('id', data.user.id)
+  }
+
+  revalidatePath('/admin')
+  return { success: true }
+}
+
 export async function toggleUserStatus(userId: string, currentStatus: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
