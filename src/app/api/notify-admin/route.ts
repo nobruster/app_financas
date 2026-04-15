@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 // Esta rota é chamada pelo Webhook do Supabase quando um novo usuário se cadastra
 export async function POST(request: NextRequest) {
+  const resend = new Resend(process.env.RESEND_API_KEY)
   // Verifica o secret para evitar chamadas não autorizadas
   const secret = request.headers.get('x-webhook-secret')
   if (secret !== process.env.WEBHOOK_SECRET) {
