@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -13,8 +13,24 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
+  const [ready, setReady] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+
+  useEffect(() => {
+    // O Supabase envia o token como hash na URL (#access_token=...)
+    // Precisamos deixar o cliente processar o hash e estabelecer a sessão
+    const supabase = createClient()
+
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setReady(true)
+      }
+    })
+
+    // Força o processamento do hash da URL
+    supabase.auth.getSession()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,13 +52,42 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password })
 
     if (error) {
-      setError('Não foi possível redefinir a senha. O link pode ter expirado.')
+      setError('Não foi possível redefinir a senha. Tente solicitar um novo link.')
       setLoading(false)
       return
     }
 
-    router.push('/dashboard')
-    router.refresh()
+    await supabase.auth.signOut()
+    router.push('/login?reset=success')
+  }
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4 relative">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        <Card className="w-full max-w-md text-center">
+          <CardHeader>
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center animate-pulse">
+                <span className="text-3xl">🔒</span>
+              </div>
+            </div>
+            <CardTitle className="text-xl">Verificando link...</CardTitle>
+            <CardDescription>Aguarde enquanto validamos seu link de recuperação.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Se demorar muito,{' '}
+              <a href="/forgot-password" className="text-blue-600 hover:underline">
+                solicite um novo link
+              </a>.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
