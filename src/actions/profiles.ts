@@ -5,6 +5,33 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Profile } from '@/types'
 
+export async function toggleUserStatus(userId: string, currentStatus: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { data: myProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (myProfile?.role !== 'admin') return { error: 'Sem permissão' }
+
+  const newStatus = currentStatus === 'approved' ? 'rejected' : 'approved'
+
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
+    .from('profiles')
+    .update({ status: newStatus })
+    .eq('id', userId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin')
+  return { success: true, newStatus }
+}
+
 export async function changeUserPassword(userId: string, newPassword: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
