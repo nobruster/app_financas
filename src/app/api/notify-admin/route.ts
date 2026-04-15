@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
-import { createAdminClient } from '@/lib/supabase/admin'
+
+export const dynamic = 'force-dynamic'
 
 // Esta rota é chamada pelo Webhook do Supabase quando um novo usuário se cadastra
 export async function POST(request: NextRequest) {
-  const resend = new Resend(process.env.RESEND_API_KEY)
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    console.error('RESEND_API_KEY não configurada')
+    return NextResponse.json({ error: 'Configuração de email ausente' }, { status: 500 })
+  }
+  const resend = new Resend(apiKey)
   // Verifica o secret para evitar chamadas não autorizadas
   const secret = request.headers.get('x-webhook-secret')
   if (secret !== process.env.WEBHOOK_SECRET) {
