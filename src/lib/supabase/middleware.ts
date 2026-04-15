@@ -29,7 +29,7 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const publicRoutes = ['/login', '/signup', '/pending', '/rejected']
+  const publicRoutes = ['/login', '/signup', '/pending', '/rejected', '/forgot-password', '/reset-password']
   const isPublicRoute = publicRoutes.some((r) => pathname.startsWith(r))
   const isAdminRoute = pathname.startsWith('/admin')
 
@@ -41,7 +41,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Autenticado em rota pública → dashboard
-  if (user && isPublicRoute && !pathname.startsWith('/pending') && !pathname.startsWith('/rejected')) {
+  if (user && isPublicRoute && !pathname.startsWith('/pending') && !pathname.startsWith('/rejected') && !pathname.startsWith('/reset-password')) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

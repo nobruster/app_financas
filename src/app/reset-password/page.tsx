@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -10,23 +9,34 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
+export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
     setError('')
 
+    if (password !== confirm) {
+      setError('As senhas não coincidem.')
+      return
+    }
+
+    if (password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres.')
+      return
+    }
+
+    setLoading(true)
+
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.updateUser({ password })
 
     if (error) {
-      setError('Email ou senha incorretos.')
+      setError('Não foi possível redefinir a senha. O link pode ter expirado.')
       setLoading(false)
       return
     }
@@ -43,10 +53,10 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
-            <span className="text-3xl">💰</span>
+            <span className="text-3xl">🔒</span>
           </div>
-          <CardTitle className="text-2xl">FinançasPessoais</CardTitle>
-          <CardDescription>Entre na sua conta para continuar</CardDescription>
+          <CardTitle className="text-2xl">Nova senha</CardTitle>
+          <CardDescription>Escolha uma nova senha para sua conta</CardDescription>
         </CardHeader>
 
         <form onSubmit={handleSubmit}>
@@ -58,47 +68,36 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="password">Nova senha</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="password"
+                type="password"
+                placeholder="Mínimo 6 caracteres"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
-                autoComplete="email"
+                autoComplete="new-password"
               />
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Senha</Label>
-                <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline">
-                  Esqueci a senha
-                </Link>
-              </div>
+              <Label htmlFor="confirm">Confirmar nova senha</Label>
               <Input
-                id="password"
+                id="confirm"
                 type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Repita a nova senha"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
                 required
-                autoComplete="current-password"
+                autoComplete="new-password"
               />
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col gap-3">
+          <CardFooter>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading ? 'Salvando...' : 'Salvar nova senha'}
             </Button>
-            <p className="text-sm text-center text-muted-foreground">
-              Não tem conta?{' '}
-              <Link href="/signup" className="text-blue-600 hover:underline font-medium">
-                Cadastre-se
-              </Link>
-            </p>
           </CardFooter>
         </form>
       </Card>
