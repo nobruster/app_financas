@@ -26,7 +26,12 @@ export default function ForgotPasswordPage() {
     })
 
     if (error) {
-      setError('Não foi possível enviar o email. Verifique o endereço e tente novamente.')
+      console.error('Supabase resetPassword error:', error)
+      if (error.message.includes('rate limit')) {
+        setError('Muitas tentativas. Aguarde alguns minutos antes de solicitar um novo link.')
+      } else {
+        setError('Não foi possível enviar o email. Verifique o endereço e tente novamente.')
+      }
       setLoading(false)
       return
     }
