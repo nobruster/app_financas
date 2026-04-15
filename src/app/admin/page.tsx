@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Profile } from '@/types'
 import { ChangePasswordButton } from '@/components/admin/change-password-button'
+import { ToggleStatusButton } from '@/components/admin/toggle-status-button'
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Pendente',
@@ -142,7 +143,14 @@ export default async function AdminPage() {
                   </td>
                   <td className="px-5 py-3">
                     {profile.id !== user.id && (
-                      <ChangePasswordButton userId={profile.id} userEmail={profile.email} />
+                      <div className="flex gap-2">
+                        <ToggleStatusButton
+                          userId={profile.id}
+                          userEmail={profile.email}
+                          currentStatus={profile.status}
+                        />
+                        <ChangePasswordButton userId={profile.id} userEmail={profile.email} />
+                      </div>
                     )}
                   </td>
                 </tr>
