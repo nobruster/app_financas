@@ -43,7 +43,7 @@ function LoginForm() {
         <div className="flex justify-center mb-2">
           <span className="text-3xl">💰</span>
         </div>
-        <CardTitle className="text-2xl">FinançasPessoais</CardTitle>
+        <CardTitle className="text-2xl">Finanças Gerais</CardTitle>
         <CardDescription>Entre na sua conta para continuar</CardDescription>
       </CardHeader>
 

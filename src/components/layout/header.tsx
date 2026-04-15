@@ -34,7 +34,7 @@ export function Header({ userEmail, isAdmin }: HeaderProps) {
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <span className="text-xl">💰</span>
-            <span className="font-semibold hidden sm:block">FinançasPessoais</span>
+            <span className="font-semibold hidden sm:block">Finanças Gerais</span>
           </div>
           <nav className="flex gap-1">
             {navLinks.map((link) => (

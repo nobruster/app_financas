@@ -71,7 +71,7 @@ export default function SignupPage() {
               <p className="font-medium text-blue-800 dark:text-blue-300">O que fazer agora:</p>
               <ol className="list-decimal list-inside space-y-1 text-blue-700 dark:text-blue-400">
                 <li>Abra sua caixa de entrada</li>
-                <li>Procure o email de <strong>FinançasPessoais</strong></li>
+                <li>Procure o email de <strong>Finanças Gerais</strong></li>
                 <li>Clique no link de confirmação</li>
                 <li>Volte aqui e faça login</li>
               </ol>

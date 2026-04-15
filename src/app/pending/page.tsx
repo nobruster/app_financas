@@ -38,7 +38,7 @@ export default async function PendingPage() {
           <ol className="text-sm text-yellow-700 dark:text-yellow-400 list-decimal list-inside space-y-1">
             <li>O administrador recebe uma notificação do seu cadastro</li>
             <li>Sua conta é revisada e aprovada manualmente</li>
-            <li>Você recebe acesso completo ao FinançasPessoais</li>
+            <li>Você recebe acesso completo ao Finanças Gerais</li>
           </ol>
         </div>
 
