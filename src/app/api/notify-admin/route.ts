@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
 
 export const dynamic = 'force-dynamic'
 
 // Esta rota é chamada pelo Webhook do Supabase quando um novo usuário se cadastra
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    console.error('RESEND_API_KEY não configurada')
-    return NextResponse.json({ error: 'Configuração de email ausente' }, { status: 500 })
-  }
-  const resend = new Resend(apiKey)
   // Verifica o secret para evitar chamadas não autorizadas
   const secret = request.headers.get('x-webhook-secret')
   if (secret !== process.env.WEBHOOK_SECRET) {
@@ -24,10 +17,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Email não encontrado' }, { status: 400 })
   }
 
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    console.error('RESEND_API_KEY não configurada')
+    return NextResponse.json({ error: 'Configuração de email ausente' }, { status: 500 })
+  }
+
   const adminEmail = process.env.ADMIN_EMAIL!
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
   try {
+    // Import dinâmico para evitar que o Resend seja carregado durante o build
+    const { Resend } = await import('resend')
+    const resend = new Resend(apiKey)
+
     await resend.emails.send({
       from: 'Finanças Gerais <onboarding@resend.dev>',
       to: adminEmail,
