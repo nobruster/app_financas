@@ -24,7 +24,7 @@ export function PeriodFilter() {
 
   return (
     <div className="flex gap-2">
-      <Select value={selectedMonth} onValueChange={(v) => handleChange('month', v)}>
+      <Select value={selectedMonth} onValueChange={(v) => v && handleChange('month', v)}>
         <SelectTrigger className="w-36">
           <SelectValue />
         </SelectTrigger>
@@ -35,7 +35,7 @@ export function PeriodFilter() {
         </SelectContent>
       </Select>
 
-      <Select value={selectedYear} onValueChange={(v) => handleChange('year', v)}>
+      <Select value={selectedYear} onValueChange={(v) => v && handleChange('year', v)}>
         <SelectTrigger className="w-28">
           <SelectValue />
         </SelectTrigger>

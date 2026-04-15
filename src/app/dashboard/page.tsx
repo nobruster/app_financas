@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { getTransactions } from '@/actions/transactions'
+import { getCategories } from '@/actions/categories'
 import { SummaryCards } from '@/components/dashboard/summary-cards'
 import { ExpenseChart } from '@/components/dashboard/expense-chart'
 import { PeriodFilter } from '@/components/dashboard/period-filter'
@@ -15,7 +16,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const month = Number(params.month ?? now.getMonth() + 1)
   const year = Number(params.year ?? now.getFullYear())
 
-  const transactions = await getTransactions({ month, year })
+  const [transactions, categories] = await Promise.all([
+    getTransactions({ month, year }),
+    getCategories(),
+  ])
 
   return (
     <div className="space-y-6">
@@ -36,7 +40,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <SummaryCards transactions={transactions} />
 
       {/* Gráfico */}
-      <ExpenseChart transactions={transactions} />
+      <ExpenseChart transactions={transactions} categories={categories} />
 
       {/* Últimas transações */}
       {transactions.length > 0 && (
