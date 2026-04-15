@@ -5,6 +5,27 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Profile } from '@/types'
 
+export async function changeUserPassword(userId: string, newPassword: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { data: myProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (myProfile?.role !== 'admin') return { error: 'Sem permissão' }
+  if (newPassword.length < 6) return { error: 'A senha deve ter pelo menos 6 caracteres.' }
+
+  const adminClient = createAdminClient()
+  const { error } = await adminClient.auth.admin.updateUserById(userId, { password: newPassword })
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
 export async function getMyProfile(): Promise<Profile | null> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

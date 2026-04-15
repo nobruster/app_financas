@@ -3,6 +3,7 @@ import { getAllProfiles, approveUser, rejectUser } from '@/actions/profiles'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Profile } from '@/types'
+import { ChangePasswordButton } from '@/components/admin/change-password-button'
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Pendente',
@@ -110,6 +111,7 @@ export default async function AdminPage() {
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground hidden sm:table-cell">Cadastro</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Perfil</th>
                 <th className="text-left px-5 py-3 font-medium text-muted-foreground">Status</th>
+                <th className="text-left px-5 py-3 font-medium text-muted-foreground">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -137,6 +139,11 @@ export default async function AdminPage() {
                     <Badge variant={STATUS_VARIANT[profile.status]}>
                       {STATUS_LABEL[profile.status]}
                     </Badge>
+                  </td>
+                  <td className="px-5 py-3">
+                    {profile.id !== user.id && (
+                      <ChangePasswordButton userId={profile.id} userEmail={profile.email} />
+                    )}
                   </td>
                 </tr>
               ))}
