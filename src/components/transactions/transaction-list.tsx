@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TransactionForm } from './transaction-form'
 import { deleteTransaction, updateTransaction } from '@/actions/transactions'
-import { Transaction, Category } from '@/types'
+import { Transaction, Category, PAYMENT_METHOD_LABELS } from '@/types'
 import { MONTHS } from '@/lib/constants'
 
 interface TransactionListProps {
@@ -128,6 +128,9 @@ export function TransactionList({ transactions, categories, currentUserId, isAdm
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <Badge variant="secondary" className="text-xs">
                       {categoryLabel(t.category)}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {PAYMENT_METHOD_LABELS[t.payment_method] ?? t.payment_method}
                     </Badge>
                     <span className="text-xs text-muted-foreground">{formatDate(t.date)}</span>
                     {t.author_email && (

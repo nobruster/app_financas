@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Category, Transaction } from '@/types'
+import { Category, Transaction, PaymentMethod, PAYMENT_METHOD_LABELS } from '@/types'
 
 interface TransactionFormProps {
   transaction?: Transaction
@@ -17,6 +17,7 @@ interface TransactionFormProps {
 export function TransactionForm({ transaction, categories, onSubmit, onCancel }: TransactionFormProps) {
   const [type, setType] = useState<'income' | 'expense'>(transaction?.type ?? 'expense')
   const [category, setCategory] = useState(transaction?.category ?? '')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(transaction?.payment_method ?? 'dinheiro')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -32,6 +33,7 @@ export function TransactionForm({ transaction, categories, onSubmit, onCancel }:
     const formData = new FormData(e.currentTarget)
     formData.set('type', type)
     formData.set('category', category)
+    formData.set('payment_method', paymentMethod)
 
     const result = await onSubmit(formData)
     if (result?.error) {
@@ -118,6 +120,21 @@ export function TransactionForm({ transaction, categories, onSubmit, onCancel }:
               <SelectItem key={cat.id} value={cat.slug}>
                 {cat.name}
               </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Forma de pagamento */}
+      <div className="space-y-2">
+        <Label>Forma de pagamento</Label>
+        <Select value={paymentMethod} onValueChange={(v) => v && setPaymentMethod(v as PaymentMethod)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.entries(PAYMENT_METHOD_LABELS) as [PaymentMethod, string][]).map(([value, label]) => (
+              <SelectItem key={value} value={value}>{label}</SelectItem>
             ))}
           </SelectContent>
         </Select>

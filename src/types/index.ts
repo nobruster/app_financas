@@ -1,5 +1,18 @@
 export type TransactionType = 'income' | 'expense'
 
+export type PaymentMethod = 'dinheiro' | 'pix' | 'conta' | 'debito' | 'credito'
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  dinheiro: 'Dinheiro',
+  pix: 'PIX',
+  conta: 'Conta Bancária',
+  debito: 'Cartão de Débito',
+  credito: 'Cartão de Crédito',
+}
+
+// Métodos que contam como "em conta" no dashboard
+export const PAYMENT_METHODS_CONTA: PaymentMethod[] = ['pix', 'conta', 'debito', 'credito']
+
 export type CategoryType = 'income' | 'expense' | 'both'
 
 export interface Category {
@@ -21,6 +34,7 @@ export interface Transaction {
   category: string
   date: string
   created_at: string
+  payment_method: PaymentMethod
   author_email: string | null
 }
 
