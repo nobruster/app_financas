@@ -21,6 +21,7 @@ export interface Transaction {
   category: string
   date: string
   created_at: string
+  author_email: string | null
 }
 
 export interface TransactionFilters {

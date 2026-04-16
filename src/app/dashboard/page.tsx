@@ -53,6 +53,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   <p className="font-medium text-sm">{t.description}</p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(t.date + 'T00:00:00').toLocaleDateString('pt-BR')}
+                    {t.author_email && (
+                      <> · por <span className="font-medium">{t.author_email.split('@')[0]}</span></>
+                    )}
                   </p>
                 </div>
                 <span className={`font-semibold text-sm ${t.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>

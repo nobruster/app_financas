@@ -9,10 +9,10 @@ export async function getTransactions(filters?: TransactionFilters): Promise<Tra
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
+  // Busca todas as transações com o email de quem cadastrou
   let query = supabase
     .from('transactions')
-    .select('*')
-    .eq('user_id', user.id)
+    .select('*, profiles(email)')
     .order('date', { ascending: false })
 
   if (filters?.type) {
@@ -33,7 +33,11 @@ export async function getTransactions(filters?: TransactionFilters): Promise<Tra
 
   const { data, error } = await query
   if (error) return []
-  return data as Transaction[]
+
+  return data.map((t) => ({
+    ...t,
+    author_email: (t.profiles as { email: string } | null)?.email ?? null,
+  })) as Transaction[]
 }
 
 export async function createTransaction(formData: FormData) {
