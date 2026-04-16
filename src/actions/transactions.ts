@@ -62,6 +62,7 @@ export async function createTransaction(formData: FormData) {
     description: formData.get('description') as string,
     category: formData.get('category') as string,
     date: formData.get('date') as string,
+    payment_method: formData.get('payment_method') as string || 'dinheiro',
   })
 
   if (error) return { error: error.message }
@@ -84,6 +85,7 @@ export async function updateTransaction(id: string, formData: FormData) {
       description: formData.get('description') as string,
       category: formData.get('category') as string,
       date: formData.get('date') as string,
+      payment_method: formData.get('payment_method') as string || 'dinheiro',
     })
     .eq('id', id)
     .eq('user_id', user.id)
