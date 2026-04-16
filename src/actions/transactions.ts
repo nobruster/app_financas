@@ -46,9 +46,11 @@ export async function getTransactions(filters?: TransactionFilters): Promise<Tra
   if (error) return []
   if (data.length === 0) return []
 
-  // Busca os emails dos autores em uma única consulta
+  // Busca os emails dos autores via adminClient (sem RLS) para que
+  // qualquer usuário aprovado consiga ver o autor de cada transação
   const userIds = [...new Set(data.map((t) => t.user_id))]
-  const { data: profiles } = await supabase
+  const adminClient = createAdminClient()
+  const { data: profiles } = await adminClient
     .from('profiles')
     .select('id, email')
     .in('id', userIds)
