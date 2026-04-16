@@ -2,7 +2,18 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { Transaction, TransactionFilters } from '@/types'
+
+async function isAdmin(userId: string): Promise<boolean> {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single()
+  return data?.role === 'admin'
+}
 
 export async function getTransactions(filters?: TransactionFilters): Promise<Transaction[]> {
   const supabase = await createClient()
@@ -77,7 +88,10 @@ export async function updateTransaction(id: string, formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  const { error } = await supabase
+  // Admin usa cliente sem RLS, usuário comum só edita o próprio
+  const client = (await isAdmin(user.id)) ? createAdminClient() : supabase
+
+  const { error } = await client
     .from('transactions')
     .update({
       type: formData.get('type') as string,
@@ -88,7 +102,6 @@ export async function updateTransaction(id: string, formData: FormData) {
       payment_method: formData.get('payment_method') as string || 'dinheiro',
     })
     .eq('id', id)
-    .eq('user_id', user.id)
 
   if (error) return { error: error.message }
 
@@ -102,11 +115,13 @@ export async function deleteTransaction(id: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  const { error } = await supabase
+  // Admin usa cliente sem RLS, usuário comum só exclui o próprio
+  const client = (await isAdmin(user.id)) ? createAdminClient() : supabase
+
+  const { error } = await client
     .from('transactions')
     .delete()
     .eq('id', id)
-    .eq('user_id', user.id)
 
   if (error) return { error: error.message }
 
