@@ -9,10 +9,10 @@ export async function getTransactions(filters?: TransactionFilters): Promise<Tra
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  // Busca todas as transações com o email de quem cadastrou
+  // Busca todas as transações da família
   let query = supabase
     .from('transactions')
-    .select('*, profiles(email)')
+    .select('*')
     .order('date', { ascending: false })
 
   if (filters?.type) {
@@ -33,10 +33,20 @@ export async function getTransactions(filters?: TransactionFilters): Promise<Tra
 
   const { data, error } = await query
   if (error) return []
+  if (data.length === 0) return []
+
+  // Busca os emails dos autores em uma única consulta
+  const userIds = [...new Set(data.map((t) => t.user_id))]
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, email')
+    .in('id', userIds)
+
+  const emailMap = new Map((profiles ?? []).map((p) => [p.id, p.email]))
 
   return data.map((t) => ({
     ...t,
-    author_email: (t.profiles as { email: string } | null)?.email ?? null,
+    author_email: emailMap.get(t.user_id) ?? null,
   })) as Transaction[]
 }
 
