@@ -13,6 +13,8 @@ import { MONTHS } from '@/lib/constants'
 interface TransactionListProps {
   transactions: Transaction[]
   categories: Category[]
+  currentUserId: string
+  isAdmin: boolean
 }
 
 function formatCurrency(value: number) {
@@ -24,7 +26,12 @@ function formatDate(dateStr: string) {
   return `${day}/${month}/${year}`
 }
 
-export function TransactionList({ transactions, categories }: TransactionListProps) {
+function authorLabel(email: string | null) {
+  if (!email) return null
+  return email.split('@')[0]
+}
+
+export function TransactionList({ transactions, categories, currentUserId, isAdmin }: TransactionListProps) {
   const [editing, setEditing] = useState<Transaction | null>(null)
   const [deleting, setDeleting] = useState<Transaction | null>(null)
   const [filterType, setFilterType] = useState('all')
@@ -42,6 +49,10 @@ export function TransactionList({ transactions, categories }: TransactionListPro
     }
     return true
   })
+
+  function canEdit(t: Transaction) {
+    return isAdmin || t.user_id === currentUserId
+  }
 
   async function handleUpdate(formData: FormData) {
     if (!editing) return
@@ -114,11 +125,16 @@ export function TransactionList({ transactions, categories }: TransactionListPro
                 </span>
                 <div className="min-w-0">
                   <p className="font-medium truncate">{t.description}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <Badge variant="secondary" className="text-xs">
                       {categoryLabel(t.category)}
                     </Badge>
                     <span className="text-xs text-muted-foreground">{formatDate(t.date)}</span>
+                    {t.author_email && (
+                      <span className="text-xs text-muted-foreground">
+                        por <span className="font-medium">{authorLabel(t.author_email)}</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -127,14 +143,16 @@ export function TransactionList({ transactions, categories }: TransactionListPro
                 <span className={`font-semibold ${t.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
                   {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
                 </span>
-                <div className="flex gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(t)}>
-                    Editar
-                  </Button>
-                  <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600" onClick={() => setDeleting(t)}>
-                    Excluir
-                  </Button>
-                </div>
+                {canEdit(t) && (
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(t)}>
+                      Editar
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600" onClick={() => setDeleting(t)}>
+                      Excluir
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
