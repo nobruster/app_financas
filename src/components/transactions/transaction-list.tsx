@@ -9,21 +9,14 @@ import { TransactionForm } from './transaction-form'
 import { deleteTransaction, updateTransaction } from '@/actions/transactions'
 import { Transaction, Category, PAYMENT_METHOD_LABELS } from '@/types'
 import { MONTHS } from '@/lib/constants'
+import { getCategoryLabel } from '@/utils/category'
+import { formatCurrency, formatDate } from '@/utils/format'
 
 interface TransactionListProps {
   transactions: Transaction[]
   categories: Category[]
   currentUserId: string
   isAdmin: boolean
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
-}
-
-function formatDate(dateStr: string) {
-  const [year, month, day] = dateStr.split('-')
-  return `${day}/${month}/${year}`
 }
 
 function authorLabel(email: string | null) {
@@ -37,8 +30,6 @@ export function TransactionList({ transactions, categories, currentUserId, isAdm
   const [filterType, setFilterType] = useState('all')
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterMonth, setFilterMonth] = useState('all')
-
-  const categoryLabel = (slug: string) => categories.find((c) => c.slug === slug)?.name ?? slug
 
   const filtered = transactions.filter((t) => {
     if (filterType !== 'all' && t.type !== filterType) return false
@@ -127,7 +118,7 @@ export function TransactionList({ transactions, categories, currentUserId, isAdm
                   <p className="font-medium truncate">{t.description}</p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <Badge variant="secondary" className="text-xs">
-                      {categoryLabel(t.category)}
+                      {getCategoryLabel(t.category, categories)}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
                       {PAYMENT_METHOD_LABELS[t.payment_method] ?? t.payment_method}

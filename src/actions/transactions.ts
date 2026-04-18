@@ -4,23 +4,14 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Transaction, TransactionFilters } from '@/types'
-
-async function isAdmin(userId: string): Promise<boolean> {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .single()
-  return data?.role === 'admin'
-}
+import { transactionSchema, ActionResult } from '@/lib/validators'
+import { isAdmin } from '@/lib/auth'
 
 export async function getTransactions(filters?: TransactionFilters): Promise<Transaction[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  // Busca todas as transações da família
   let query = supabase
     .from('transactions')
     .select('*')
@@ -43,11 +34,13 @@ export async function getTransactions(filters?: TransactionFilters): Promise<Tra
   }
 
   const { data, error } = await query
-  if (error) return []
+  if (error) {
+    console.error('Erro ao buscar transações:', error.message)
+    throw new Error('Falha ao carregar transações. Tente novamente.')
+  }
   if (data.length === 0) return []
 
-  // Busca os emails dos autores via adminClient (sem RLS) para que
-  // qualquer usuário aprovado consiga ver o autor de cada transação
+  // Busca emails dos autores em batch (evita N+1)
   const userIds = [...new Set(data.map((t) => t.user_id))]
   const adminClient = createAdminClient()
   const { data: profiles } = await adminClient
@@ -63,19 +56,27 @@ export async function getTransactions(filters?: TransactionFilters): Promise<Tra
   })) as Transaction[]
 }
 
-export async function createTransaction(formData: FormData) {
+export async function createTransaction(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
+  const parsed = transactionSchema.safeParse({
+    type: formData.get('type'),
+    amount: Number(formData.get('amount')),
+    description: formData.get('description'),
+    category: formData.get('category'),
+    date: formData.get('date'),
+    payment_method: formData.get('payment_method') || 'dinheiro',
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
+  }
+
   const { error } = await supabase.from('transactions').insert({
     user_id: user.id,
-    type: formData.get('type') as string,
-    amount: Number(formData.get('amount')),
-    description: formData.get('description') as string,
-    category: formData.get('category') as string,
-    date: formData.get('date') as string,
-    payment_method: formData.get('payment_method') as string || 'dinheiro',
+    ...parsed.data,
   })
 
   if (error) return { error: error.message }
@@ -85,47 +86,87 @@ export async function createTransaction(formData: FormData) {
   return { success: true }
 }
 
-export async function updateTransaction(id: string, formData: FormData) {
+export async function updateTransaction(id: string, formData: FormData): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  // Admin usa cliente sem RLS, usuário comum só edita o próprio
-  const client = (await isAdmin(user.id)) ? createAdminClient() : supabase
+  const parsed = transactionSchema.safeParse({
+    type: formData.get('type'),
+    amount: Number(formData.get('amount')),
+    description: formData.get('description'),
+    category: formData.get('category'),
+    date: formData.get('date'),
+    payment_method: formData.get('payment_method') || 'dinheiro',
+  })
 
-  const { error } = await client
-    .from('transactions')
-    .update({
-      type: formData.get('type') as string,
-      amount: Number(formData.get('amount')),
-      description: formData.get('description') as string,
-      category: formData.get('category') as string,
-      date: formData.get('date') as string,
-      payment_method: formData.get('payment_method') as string || 'dinheiro',
-    })
-    .eq('id', id)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
+  }
 
-  if (error) return { error: error.message }
+  const adminCheck = await isAdmin(user.id)
+
+  if (adminCheck) {
+    const adminClient = createAdminClient()
+    const { error } = await adminClient
+      .from('transactions')
+      .update(parsed.data)
+      .eq('id', id)
+    if (error) return { error: error.message }
+  } else {
+    // Verifica ownership explicitamente antes de atualizar
+    const { data: existing } = await supabase
+      .from('transactions')
+      .select('user_id')
+      .eq('id', id)
+      .single()
+
+    if (!existing) return { error: 'Transação não encontrada' }
+    if (existing.user_id !== user.id) return { error: 'Sem permissão para editar esta transação' }
+
+    const { error } = await supabase
+      .from('transactions')
+      .update(parsed.data)
+      .eq('id', id)
+    if (error) return { error: error.message }
+  }
 
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/transactions')
   return { success: true }
 }
 
-export async function deleteTransaction(id: string) {
+export async function deleteTransaction(id: string): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  // Admin usa cliente sem RLS, usuário comum só exclui o próprio
-  const client = (await isAdmin(user.id)) ? createAdminClient() : supabase
+  const adminCheck = await isAdmin(user.id)
 
-  const { error } = await client
-    .from('transactions')
-    .delete()
-    .eq('id', id)
+  if (adminCheck) {
+    const adminClient = createAdminClient()
+    const { error } = await adminClient
+      .from('transactions')
+      .delete()
+      .eq('id', id)
+    if (error) return { error: error.message }
+  } else {
+    // Verifica ownership explicitamente antes de excluir
+    const { data: existing } = await supabase
+      .from('transactions')
+      .select('user_id')
+      .eq('id', id)
+      .single()
 
-  if (error) return { error: error.message }
+    if (!existing) return { error: 'Transação não encontrada' }
+    if (existing.user_id !== user.id) return { error: 'Sem permissão para excluir esta transação' }
+
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('id', id)
+    if (error) return { error: error.message }
+  }
 
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/transactions')

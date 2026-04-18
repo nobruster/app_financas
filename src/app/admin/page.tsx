@@ -3,7 +3,8 @@ import { getAllProfiles, approveUser, rejectUser } from '@/actions/profiles'
 import { getAllCategories } from '@/actions/categories'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
-import { Profile } from '@/types'
+import { Profile, Category } from '@/types'
+import { formatDateTime } from '@/utils/format'
 import { ChangePasswordButton } from '@/components/admin/change-password-button'
 import { ToggleStatusButton } from '@/components/admin/toggle-status-button'
 import { CreateUserButton } from '@/components/admin/create-user-button'
@@ -21,12 +22,6 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive'> = 
   rejected: 'destructive',
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('pt-BR', {
-    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  })
-}
-
 export default async function AdminPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -35,9 +30,8 @@ export default async function AdminPage() {
   const [profiles, categories] = await Promise.all([
     getAllProfiles(),
     getAllCategories(),
-  ])
+  ]).catch((): [Profile[], Category[]] => [[], []])
   const pending = profiles.filter((p: Profile) => p.status === 'pending')
-  const others = profiles.filter((p: Profile) => p.status !== 'pending')
 
   async function approve(formData: FormData) {
     'use server'
@@ -82,7 +76,7 @@ export default async function AdminPage() {
               <div key={profile.id} className="bg-card border rounded-lg px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <p className="font-medium text-foreground">{profile.email}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Cadastrado em {formatDate(profile.created_at)}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Cadastrado em {formatDateTime(profile.created_at)}</p>
                 </div>
                 <div className="flex gap-2">
                   <form action={approve}>
@@ -143,7 +137,7 @@ export default async function AdminPage() {
                     )}
                   </td>
                   <td className="px-5 py-3 text-muted-foreground hidden sm:table-cell">
-                    {formatDate(profile.created_at)}
+                    {formatDateTime(profile.created_at)}
                   </td>
                   <td className="px-5 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${

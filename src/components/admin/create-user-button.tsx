@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { createUserByAdmin } from '@/actions/profiles'
+import { MIN_PASSWORD_LENGTH } from '@/lib/constants'
 
 export function CreateUserButton() {
   const [open, setOpen] = useState(false)
@@ -90,7 +91,7 @@ export function CreateUserButton() {
                 <Input
                   id="new-user-password"
                   type="password"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
