@@ -3,18 +3,14 @@ import { getCategories } from '@/actions/categories'
 import { TransactionList } from '@/components/transactions/transaction-list'
 import { NewTransactionButton } from '@/components/transactions/new-transaction-button'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { isAdmin } from '@/lib/auth'
 
 export default async function TransactionsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
 
-  const adminClient = createAdminClient()
-  const { data: profile } = await adminClient
-    .from('profiles')
-    .select('role')
-    .eq('id', user!.id)
-    .single()
+  const adminFlag = await isAdmin(user.id)
 
   const [transactions, categories] = await Promise.all([
     getTransactions(),
@@ -31,8 +27,8 @@ export default async function TransactionsPage() {
       <TransactionList
         transactions={transactions}
         categories={categories}
-        currentUserId={user!.id}
-        isAdmin={profile?.role === 'admin'}
+        currentUserId={user.id}
+        isAdmin={adminFlag}
       />
     </div>
   )

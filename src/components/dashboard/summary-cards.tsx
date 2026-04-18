@@ -1,12 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Transaction, PAYMENT_METHODS_CONTA } from '@/types'
+import { formatCurrency } from '@/utils/format'
 
 interface SummaryCardsProps {
   transactions: Transaction[]
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 }
 
 export function SummaryCards({ transactions }: SummaryCardsProps) {

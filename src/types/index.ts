@@ -45,12 +45,6 @@ export interface TransactionFilters {
   type?: TransactionType
 }
 
-export interface DashboardSummary {
-  totalIncome: number
-  totalExpense: number
-  balance: number
-}
-
 export type UserRole = 'admin' | 'user'
 export type UserStatus = 'pending' | 'approved' | 'rejected'
 

@@ -5,6 +5,7 @@ import { SummaryCards } from '@/components/dashboard/summary-cards'
 import { ExpenseChart } from '@/components/dashboard/expense-chart'
 import { PeriodFilter } from '@/components/dashboard/period-filter'
 import { MONTHS } from '@/lib/constants'
+import { formatCurrency } from '@/utils/format'
 
 interface DashboardPageProps {
   searchParams: Promise<{ month?: string; year?: string }>
@@ -13,8 +14,10 @@ interface DashboardPageProps {
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const params = await searchParams
   const now = new Date()
-  const month = Number(params.month ?? now.getMonth() + 1)
-  const year = Number(params.year ?? now.getFullYear())
+  const rawMonth = Number(params.month ?? now.getMonth() + 1)
+  const rawYear = Number(params.year ?? now.getFullYear())
+  const month = rawMonth >= 1 && rawMonth <= 12 ? rawMonth : now.getMonth() + 1
+  const year = rawYear >= 2000 && rawYear <= 2100 ? rawYear : now.getFullYear()
 
   const [transactions, categories] = await Promise.all([
     getTransactions({ month, year }),
@@ -60,7 +63,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 </div>
                 <span className={`font-semibold text-sm ${t.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
                   {t.type === 'income' ? '+' : '-'}
-                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(t.amount))}
+                  {formatCurrency(Number(t.amount))}
                 </span>
               </div>
             ))}

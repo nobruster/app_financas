@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
 import { ThemeProvider } from '@/components/layout/theme-provider'
+import { validateEnv } from '@/lib/env'
 import './globals.css'
+
+validateEnv()
 
 const geist = Geist({ subsets: ['latin'] })
 

@@ -2,18 +2,42 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+// Rate limiting simples em memória (por IP)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT_MAX = 5
+const RATE_LIMIT_WINDOW_MS = 60_000
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip)
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+    return true
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) return false
+
+  entry.count++
+  return true
+}
+
 // Esta rota é chamada pelo Webhook do Supabase quando um novo usuário se cadastra
 export async function POST(request: NextRequest) {
-  // Verifica o secret para evitar chamadas não autorizadas
+  const ip = request.headers.get('x-forwarded-for') ?? 'unknown'
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: 'Muitas requisições' }, { status: 429 })
+  }
+
   const secret = request.headers.get('x-webhook-secret')
-  if (secret !== process.env.WEBHOOK_SECRET) {
+  if (!secret || secret !== process.env.WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
   const body = await request.json()
   const userEmail = body?.record?.email
 
-  if (!userEmail) {
+  if (!userEmail || typeof userEmail !== 'string') {
     return NextResponse.json({ error: 'Email não encontrado' }, { status: 400 })
   }
 
@@ -23,18 +47,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Configuração de email ausente' }, { status: 500 })
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL!
+  const adminEmail = process.env.ADMIN_EMAIL
+  if (!adminEmail) {
+    console.error('ADMIN_EMAIL não configurada')
+    return NextResponse.json({ error: 'Configuração de destinatário ausente' }, { status: 500 })
+  }
+
+  const senderEmail = process.env.EMAIL_FROM ?? 'onboarding@resend.dev'
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
   try {
-    // Import dinâmico para evitar que o Resend seja carregado durante o build
     const { Resend } = await import('resend')
     const resend = new Resend(apiKey)
 
     await resend.emails.send({
-      from: 'Finanças Gerais <onboarding@resend.dev>',
+      from: `Finanças Gerais <${senderEmail}>`,
       to: adminEmail,
-      subject: '🔔 Novo cadastro aguardando aprovação',
+      subject: 'Novo cadastro aguardando aprovação',
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
           <h2 style="color: #1e293b;">Novo cadastro pendente</h2>

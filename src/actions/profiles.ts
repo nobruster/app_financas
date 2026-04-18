@@ -4,28 +4,39 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Profile } from '@/types'
+import { passwordSchema, ActionResult } from '@/lib/validators'
 
-export async function createUserByAdmin(email: string, password: string) {
+type AdminAuth = { userId: string; error?: never }
+type AdminAuthError = { error: string; userId?: never }
+
+async function requireAdmin(): Promise<AdminAuth | AdminAuthError> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  const { data: myProfile } = await supabase
+  const { data: profile } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
 
-  if (myProfile?.role !== 'admin') return { error: 'Sem permissão' }
-  if (password.length < 6) return { error: 'A senha deve ter pelo menos 6 caracteres.' }
+  if (profile?.role !== 'admin') return { error: 'Sem permissão: apenas administradores podem realizar esta ação' }
+
+  return { userId: user.id }
+}
+
+export async function createUserByAdmin(email: string, password: string): Promise<ActionResult> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return auth
+
+  const parsedPassword = passwordSchema.safeParse(password)
+  if (!parsedPassword.success) return { error: parsedPassword.error.issues[0].message }
 
   const adminClient = createAdminClient()
-
-  // Cria o usuário via auth admin (sem precisar de confirmação de email)
   const { data, error } = await adminClient.auth.admin.createUser({
     email,
     password,
-    email_confirm: true, // já confirma o email automaticamente
+    email_confirm: true,
   })
 
   if (error) {
@@ -33,12 +44,10 @@ export async function createUserByAdmin(email: string, password: string) {
     return { error: error.message }
   }
 
-  // O trigger handle_new_user cria o perfil automaticamente,
-  // mas como é criado pelo admin, já aprovamos direto
   if (data.user) {
     await adminClient
       .from('profiles')
-      .update({ status: 'approved', approved_by: user.id, approved_at: new Date().toISOString() })
+      .update({ status: 'approved', approved_by: auth.userId, approved_at: new Date().toISOString() })
       .eq('id', data.user.id)
   }
 
@@ -46,18 +55,9 @@ export async function createUserByAdmin(email: string, password: string) {
   return { success: true }
 }
 
-export async function toggleUserStatus(userId: string, currentStatus: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Não autenticado' }
-
-  const { data: myProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (myProfile?.role !== 'admin') return { error: 'Sem permissão' }
+export async function toggleUserStatus(userId: string, currentStatus: string): Promise<ActionResult> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return auth
 
   const newStatus = currentStatus === 'approved' ? 'rejected' : 'approved'
 
@@ -73,19 +73,12 @@ export async function toggleUserStatus(userId: string, currentStatus: string) {
   return { success: true, newStatus }
 }
 
-export async function changeUserPassword(userId: string, newPassword: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Não autenticado' }
+export async function changeUserPassword(userId: string, newPassword: string): Promise<ActionResult> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return auth
 
-  const { data: myProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (myProfile?.role !== 'admin') return { error: 'Sem permissão' }
-  if (newPassword.length < 6) return { error: 'A senha deve ter pelo menos 6 caracteres.' }
+  const parsedPassword = passwordSchema.safeParse(newPassword)
+  if (!parsedPassword.success) return { error: parsedPassword.error.issues[0].message }
 
   const adminClient = createAdminClient()
   const { error } = await adminClient.auth.admin.updateUserById(userId, { password: newPassword })
@@ -109,20 +102,9 @@ export async function getMyProfile(): Promise<Profile | null> {
 }
 
 export async function getAllProfiles(): Promise<Profile[]> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return []
+  const auth = await requireAdmin()
+  if ('error' in auth) return []
 
-  // Verifica se é admin antes de buscar todos
-  const { data: myProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (myProfile?.role !== 'admin') return []
-
-  // Usa service role para bypassar RLS e ver todos os perfis
   const adminClient = createAdminClient()
   const { data } = await adminClient
     .from('profiles')
@@ -132,18 +114,9 @@ export async function getAllProfiles(): Promise<Profile[]> {
   return (data ?? []) as Profile[]
 }
 
-export async function approveUser(userId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Não autenticado' }
-
-  const { data: myProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (myProfile?.role !== 'admin') return { error: 'Sem permissão' }
+export async function approveUser(userId: string): Promise<ActionResult> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return auth
 
   const adminClient = createAdminClient()
   const { error } = await adminClient
@@ -151,7 +124,7 @@ export async function approveUser(userId: string) {
     .update({
       status: 'approved',
       approved_at: new Date().toISOString(),
-      approved_by: user.id,
+      approved_by: auth.userId,
     })
     .eq('id', userId)
 
@@ -161,18 +134,9 @@ export async function approveUser(userId: string) {
   return { success: true }
 }
 
-export async function rejectUser(userId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Não autenticado' }
-
-  const { data: myProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (myProfile?.role !== 'admin') return { error: 'Sem permissão' }
+export async function rejectUser(userId: string): Promise<ActionResult> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return auth
 
   const adminClient = createAdminClient()
   const { error } = await adminClient
