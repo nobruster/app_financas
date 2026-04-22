@@ -1,6 +1,5 @@
 -- FinançasPessoais — Schema do Banco de Dados
 -- Execute este arquivo no SQL Editor do Supabase
--- Projeto: https://SEU-PROJETO.supabase.co
 
 -- ============================================================
 -- TABELA: transactions

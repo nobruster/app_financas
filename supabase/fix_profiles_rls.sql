@@ -38,24 +38,25 @@ CREATE POLICY "Admin atualiza"
 
 -- ============================================================
 -- Corrige usuários já cadastrados que não têm perfil ainda
+-- Substitua <EMAIL_DO_ADMIN> pelo email do admin antes de executar
 -- ============================================================
-INSERT INTO profiles (id, email, role, status)
-SELECT
-  u.id,
-  u.email,
-  CASE
-    WHEN u.email = 'EMAIL_ADMIN_REMOVIDO' THEN 'admin'
-    ELSE 'user'
-  END as role,
-  CASE
-    WHEN u.email = 'EMAIL_ADMIN_REMOVIDO' THEN 'approved'
-    ELSE 'pending'
-  END as status
-FROM auth.users u
-LEFT JOIN profiles p ON p.id = u.id
-WHERE p.id IS NULL
-ON CONFLICT (id) DO NOTHING;
+-- INSERT INTO profiles (id, email, role, status)
+-- SELECT
+--   u.id,
+--   u.email,
+--   CASE
+--     WHEN u.email = '<EMAIL_DO_ADMIN>' THEN 'admin'
+--     ELSE 'user'
+--   END as role,
+--   CASE
+--     WHEN u.email = '<EMAIL_DO_ADMIN>' THEN 'approved'
+--     ELSE 'pending'
+--   END as status
+-- FROM auth.users u
+-- LEFT JOIN profiles p ON p.id = u.id
+-- WHERE p.id IS NULL
+-- ON CONFLICT (id) DO NOTHING;
 
--- Garante que EMAIL_ADMIN_REMOVIDO é admin
-UPDATE profiles SET role = 'admin', status = 'approved'
-WHERE email = 'EMAIL_ADMIN_REMOVIDO';
+-- Garante que o email indicado é admin
+-- UPDATE profiles SET role = 'admin', status = 'approved'
+-- WHERE email = '<EMAIL_DO_ADMIN>';
