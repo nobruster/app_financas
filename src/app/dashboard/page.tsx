@@ -1,42 +1,21 @@
-import { Suspense } from 'react'
 import { getTransactions } from '@/actions/transactions'
 import { getCategories } from '@/actions/categories'
 import { SummaryCards } from '@/components/dashboard/summary-cards'
 import { ExpenseChart } from '@/components/dashboard/expense-chart'
-import { PeriodFilter } from '@/components/dashboard/period-filter'
-import { MONTHS } from '@/lib/constants'
 import { formatCurrency } from '@/utils/format'
 
-interface DashboardPageProps {
-  searchParams: Promise<{ month?: string; year?: string }>
-}
-
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const params = await searchParams
-  const now = new Date()
-  const rawMonth = Number(params.month ?? now.getMonth() + 1)
-  const rawYear = Number(params.year ?? now.getFullYear())
-  const month = rawMonth >= 1 && rawMonth <= 12 ? rawMonth : now.getMonth() + 1
-  const year = rawYear >= 2000 && rawYear <= 2100 ? rawYear : now.getFullYear()
-
+export default async function DashboardPage() {
   const [transactions, categories] = await Promise.all([
-    getTransactions({ month, year }),
+    getTransactions(),
     getCategories(),
   ])
 
   return (
     <div className="space-y-6">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {MONTHS[month - 1]} de {year}
-          </p>
-        </div>
-        <Suspense>
-          <PeriodFilter />
-        </Suspense>
+      <div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">Todas as transações</p>
       </div>
 
       {/* Cards de resumo */}
